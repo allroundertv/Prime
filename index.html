@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Shaka Player</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+  <!-- Shaka Player -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.6/shaka-player.compiled.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #video-container {
+      width: 100vw; /* Full width */
+      height: calc(100vw * 9 / 16); /* 16:9 aspect ratio */
+      max-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Quality selection */
+    #quality-toggle {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: #ff5722;
+      color: white;
+      border: none;
+      padding: 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    #quality-menu {
+      display: none;
+      position: absolute;
+      bottom: 50px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 10px;
+      border-radius: 5px;
+      color: white;
+      z-index: 10;
+    }
+
+    #quality-menu button {
+      background: #ff5722;
+      color: white;
+      border: none;
+      padding: 5px;
+      margin: 5px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: block;
+    }
+
+    /* Telegram Pop-up */
+    #telegram-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.9);
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      display: none;
+      z-index: 1000;
+      color: white;
+    }
+
+    #telegram-popup button {
+      background: #0088cc;
+      color: white;
+      border: none;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Video Container -->
+  <div id="video-container">
+    <video id="video" controls autoplay playsinline></video>
+    <button id="quality-toggle">Quality</button>
+    <div id="quality-menu"></div>
+  </div>
+
+  <!-- Telegram Pop-up -->
+  <div id="telegram-popup">
+    <p>Join our Telegram channel for exclusive updates!</p>
+    <button onclick="window.open('https://t.me/cricketclipsprovider', '_blank')">Join Now</button>
+    <button onclick="closePopup()">Close</button>
+  </div>
+
+  <script>
+    async function initPlayer() {
+      if (!shaka.Player.isBrowserSupported()) {
+        console.error("Shaka Player is not supported on this browser.");
+        return;
+      }
+
+      const video = document.getElementById('video');
+      const player = new shaka.Player(video);
+
+      // DRM Configuration
+      const manifestUri = "https://otte.live.fly.ww.aiv-cdn.net/pdx-nitro/live/clients/dash/enc/qlmzlpteki/out/v1/cbe557b92c4f487da3f69a14a5b1dcaf/cenc.mpd";
+
+      player.configure({
+        drm: {
+          clearKeys: {
+            "ae1abaaa3b050537aef6df0b3d32ad7f": "bcec14c796465542ad450a43a605e71f"
+          }
+        }
+      });
+
+      // Load the video
+      try {
+        await player.load(manifestUri);
+        console.log("The video has been loaded successfully!");
+        setupQualitySelection(player);
+      } catch (error) {
+        console.error("Error loading video:", error);
+      }
+    }
+
+    function setupQualitySelection(player) {
+      const qualityMenu = document.getElementById('quality-menu');
+      const qualityToggle = document.getElementById('quality-toggle');
+      qualityMenu.innerHTML = '';
+
+      const tracks = player.getVariantTracks();
+      const uniqueTracks = Array.from(new Set(tracks.map(t => t.height)))
+        .sort((a, b) => b - a); // Sort from highest to lowest
+
+      uniqueTracks.forEach(height => {
+        const button = document.createElement('button');
+        button.innerText = `${height}p`;
+        button.onclick = () => {
+          tracks.forEach(track => {
+            if (track.height === height) {
+              player.selectVariantTrack(track, true);
+            }
+          });
+        };
+        qualityMenu.appendChild(button);
+      });
+
+      qualityToggle.addEventListener("click", () => {
+        qualityMenu.style.display = qualityMenu.style.display === "block" ? "none" : "block";
+      });
+    }
+
+    function showPopup() {
+      document.getElementById('telegram-popup').style.display = 'block';
+    }
+
+    function closePopup() {
+      document.getElementById('telegram-popup').style.display = 'none';
+    }
+
+    // Show the Telegram pop-up after 5 seconds
+    setTimeout(showPopup, 5000);
+
+    document.addEventListener("DOMContentLoaded", initPlayer);
+  </script>
+
+</body>
+</html>
